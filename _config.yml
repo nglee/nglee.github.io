@@ -1,0 +1,17 @@
+title:              Pensieve
+description:        'Embedded, TX1'
+tagline:            'Embedded, TX1'
+url:                https://nglee.github.io
+baseurl:            ''
+paginate:           5
+timezone:           Asia/Seoul
+
+author:
+  name:             Namgoo Lee
+  url:              https://nglee.github.io
+  email:            lee.namgoo@sualab.com
+
+version:            1.0.0
+
+plugins:
+    - jekyll-seo-tag
