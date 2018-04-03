@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Jetson TX1에 Swap 공간 설정하기"
+comments: true
 ---
 
 이 포스트에서는 **JetPack 3.1이 설치된 TX1에** swap 공간을 설정하는 방법을 설명하겠습니다. 리눅스 기반 시스템에 swap 공간을 설정하는 방법은 [여기](http://www.jetsonhacks.com/2016/12/21/jetson-tx1-swap-file-and-development-preparation/) [저기](https://jkjung-avt.github.io/swap-on-tx1/)서 쉽게 찾아볼 수 있습니다. 그런데 JetPack 3.1이 설치된 TX1에서 위 링크에서 소개하는 방법을 따라하다보면 `swapon` 명령어를 입력하는 단계에서 다음과 같은 에러 메시지를 볼 수 있습니다.

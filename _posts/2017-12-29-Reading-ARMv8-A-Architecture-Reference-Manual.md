@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "ARMv8-A 아키텍쳐 레퍼런스 매뉴얼을 읽어보자"
+comments: true
 published: false
 ---
 

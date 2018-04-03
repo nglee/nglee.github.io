@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Jetson TX1에 CNTK Evaluation 라이브러리 설치하기"
+comments: true
 ---
 
 이 포스트에서는 Jetson TX1에 CNTK를 이용한 모델 evaluation에 필요한 라이브러리들을 설치하는 방법을 설명하겠습니다. 전체 소요 시간은 약 2시간입니다. 이 포스트는 공식 CNTK 사이트의 [Setup CNTK on Linux](https://docs.microsoft.com/en-us/cognitive-toolkit/Setup-CNTK-on-Linux) 문서를 참조하였습니다.
