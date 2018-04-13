@@ -4,6 +4,8 @@ title: "Jetson TX1에 Swap 공간 설정하기"
 comments: true
 ---
 
+_(2018-04-13 내용 추가) 이 포스트는 본래 JetPack의 최신 버전이 3.1일 때를 기준으로 작성되었습니다. JetPack 3.1에 포함된 L4T 28.1은 Swap 기능이 비활성화된 채로 배포되기 때문에 L4T 28.1에서 Swap 공간을 설정하려면 커널을 다시 빌드하여야 했습니다. 그러나 고맙게도 이후 발표된 JetPack 3.2에 포함된 L4T 28.2는 Swap 기능이 기본으로 활성화되어 있습니다. 따라서 JetPack 3.2를 설치했다면 아래 "커널 빌드" 부분은 생략해도 됩니다._
+
 이 포스트에서는 **JetPack 3.1이 설치된 TX1에** swap 공간을 설정하는 방법을 설명하겠습니다. 리눅스 기반 시스템에 swap 공간을 설정하는 방법은 [여기](http://www.jetsonhacks.com/2016/12/21/jetson-tx1-swap-file-and-development-preparation/) [저기](https://jkjung-avt.github.io/swap-on-tx1/)서 쉽게 찾아볼 수 있습니다. 그런데 JetPack 3.1이 설치된 TX1에서 위 링크에서 소개하는 방법을 따라하다보면 `swapon` 명령어를 입력하는 단계에서 다음과 같은 에러 메시지를 볼 수 있습니다.
 
 ```
@@ -85,5 +87,10 @@ $ $HOME/tegrastats
     <td class="td_center">1.1</td>
     <td>Refined</td>
     <td class="td_center">2017-12-22</td>
+  </tr>
+  <tr>
+    <td class="td_center">2.0</td>
+    <td>L4T 28.2 in JetPack 3.2 has swap enabled by default</td>
+    <td class="td_center">2018-04-13</td>
   </tr>
 </table>
