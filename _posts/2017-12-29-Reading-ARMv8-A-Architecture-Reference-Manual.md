@@ -191,8 +191,9 @@ kernel, and a hypervisor, executing at different Exception levels, can execute i
 
 실행상태를 바꾸는 것을 인터프로세싱(interprocessing)이라고 부른다. PE는 예외처리 수준이 변경될 때에만 실행상태를 변경할 수 있다. 이에 대한 규칙은 D1-1962에 기술되어 있다. 응용프로그램, 운영체제, 커널, 하이퍼바이저 등과 같이 서로 다른 예외처리 수준에서 실행되는 소프트웨어들은 서로 다른 실행상태를 가질 수 있다.
 
----------------------------------------------------------------------------
-#### ChangeLog
+----------
+<a href="javascript:showChangeLog();">Show ChangeLog</a>
+<div id="post_changelog" style="display:none;">
 <table>
   <tr>
     <th>Version</th>
@@ -210,3 +211,4 @@ kernel, and a hypervisor, executing at different Exception levels, can execute i
     <td class="td_center">2017-01-09</td>
   </tr>
 </table>
+</div>

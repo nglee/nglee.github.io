@@ -30,8 +30,9 @@ $ bundle update                         # Without sudo, and enter password only 
 $ bundle exec jekyll serve              # Server starts on 127.0.0.1:4000
 ```
 
----------------------------------------------------------------------------
-#### ChangeLog
+----------
+<a href="javascript:showChangeLog();">Show ChangeLog</a>
+<div id="post_changelog" style="display:none;">
 <table>
   <tr>
     <th>Version</th>
@@ -44,3 +45,4 @@ $ bundle exec jekyll serve              # Server starts on 127.0.0.1:4000
     <td class="td_center">2018-01-23</td>
   </tr>
 </table>
+</div>

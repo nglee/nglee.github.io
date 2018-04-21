@@ -65,8 +65,10 @@ $ sudo ./createSwapfile.sh -d $HOME -s 8 -a
 ```shell
 $ $HOME/tegrastats
 ```
----------------------------------------------------------------------------
-#### ChangeLog
+
+----------
+<a href="javascript:showChangeLog();">Show ChangeLog</a>
+<div id="post_changelog" style="display:none;">
 <table>
   <tr>
     <th>Version</th>
@@ -94,3 +96,4 @@ $ $HOME/tegrastats
     <td class="td_center">2018-04-13</td>
   </tr>
 </table>
+</div>
