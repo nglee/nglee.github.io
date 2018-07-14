@@ -2,7 +2,6 @@
 layout: post
 title: "Boost.Interprocess 객체의 인스턴스는 언제 해제되는가?"
 comments: true
-published: false
 ---
 
 C++ 프로그램에서 프로세스 간 통신(이하 IPC, Inter-Process Communication)을 위해 `boost::interprocess`에서 정의된 객체(Object)들을 사용하게 되었습니다. 프로세스 간 공유 메모리(Inter-Process shared memory)나 프로세스 간 뮤텍스(Inter-Process Mutex)를 사용하려고 하다보니, 자연스럽게 다음과 같은 의문점이 생겼습니다.
@@ -17,7 +16,7 @@ C++ 프로그램에서 프로세스 간 통신(이하 IPC, Inter-Process Communi
 > * 커널 수준 지속: 운영체제의 커널이 재시작(reboot)되거나 자원이 명시적으로 삭제(delete)될 때까지 유지된다.
 > * 파일시스템 수준 지속: 자원이 명시적으로 삭제(delete)될 때까지 유지된다.
 
-각각의 수준에 대해 매우 잘 정리되어 있음을 알 수 있습니다. 하지만 문제는, 제가 사용하고자 했던 `boost::interprocess`의 자원들이 위 세가지 중 어디에 속하는지가 명확히 정리되어 있지 않았다는 점입니다. 관련된 부분에 대해 스택 오버플로우에 [질문](https://stackoverflow.com/q/50691184/7724939)을 올리기도 했고 무려 50점이나 되는 현상금(bounty)을 걸었음에도 만족할 만한 답변을 얻지 못했습니다.
+각각의 수준에 대해 매우 잘 정리되어 있음을 알 수 있습니다. 하지만 문제는, 제가 사용하고자 했던 `boost::interprocess`의 자원들이 위 세가지 중 어디에 속하는지가 명확히 정리되어 있지 않았다는 점입니다. 관련지어 스택 오버플로우에 [질문](https://stackoverflow.com/q/50691184/7724939)을 올리기도 했고 처음으로 현상금(bounty)도 걸어보았음에도 만족할 만한 답변을 얻지 못했습니다.
 
 
 그래서 테스트 코드를 직접 짜 보면서 실험을 해보기로 했습니다. 그리고 스택 오버플로우 질문에는 직접 [답변](https://stackoverflow.com/a/51335826/7724939)을 달았습니다. `boost::interprocess`에서 제공하는 모든 종류의 자원을 테스트해보지는 못했고, 제가 확인이 필요했던 것들만 테스트해보았습니다.
@@ -50,7 +49,9 @@ $
 
 ## managed_windows_shared_memory : 프로세스 수준 지속
 
-이 공유 메모리는 윈도우즈에서만 사용할 수 있습니다. 위와 같이 테스트하면 **프로세스 수준 지속**임을 알 수 있습니다.
+이 공유 메모리는 윈도우즈에서만 사용할 수 있습니다. 다음과 같은 코드로 컴파일 후 연속적으로 실행하면 항상 `shared memory created`가 출력됩니다. 따라서 **프로세스 수준 지속**임을 알 수 있습니다.
+
+<script src="https://gist.github.com/nglee/f89b6448a05edcb9ed382a94e8aa13d5.js"></script>
 
 ## interprocess_mutex : 커널 수준 지속
 
@@ -66,7 +67,7 @@ $
 
 위와 같이 프로세스가 종료되어도 공유 메모리에 할당된 `interprocess_mutex`가 자동으로 해제되지 않는 것을 보니 프로세스 수준 지속은 아님을 알 수 있습니다. `interprocess_mutex`가 할당된 `managed_xsi_shared_memory`가 **커널 수준 지속**이므로 `interprocess_mutex`도 **커널 수준 지속**임을 알 수 있습니다.
 
-뮤텍스의 경우 한 가지 궁금한 점이 더 생깁니다. 비록 자원은 해제되지 않더라도, 혹시 `unlock`은 자동으로 해주지 않을까? 즉, 어떤 프로세스가 `interprocess_mutex`를 `lock`하고 나서 `unlock`하지 않고 프로세스가 종료된다면, 다른 프로세스가 그 `interprocess_mutex`를 `lock`할 수 있을까요?
+뮤텍스의 경우 한 가지 궁금한 점이 더 생깁니다. 비록 자원은 해제되지 않더라도, 혹시 `unlock`은 자동으로 해줄까요? 다시 말해, 어떤 프로세스가 `interprocess_mutex`를 `lock`하고 나서 `unlock`하지 않고 프로세스가 종료된다면, 다른 프로세스가 그 `interprocess_mutex`를 `lock`할 수 있을까요?
 
 <script src="https://gist.github.com/nglee/b9dd4d8f55010d47a48f30f4967b86d1.js"></script>
 ```
@@ -99,7 +100,7 @@ The second process locked the mutex!
 $
 ```
 
-하지만 `scoped_lock`도 완벽한 해답이 되지는 못합니다. 만약 `scoped_lock`이 해제가 되기 전에 프로세스가 종료된다면, 결국 `unlock`이 되지 않는 것이나 마찬가지입니다. 다음은 `gdb`를 이용해서 인위적으로 `scoped_lock`이 해제되기 전에 프로세스를 종료시킨 후에 다른 프로세스에서 `lock`을 시도하는 예제입니다.
+하지만 `scoped_lock`도 완벽한 해답이 되지는 못합니다. 만약 `scoped_lock`의 인스턴스가 해제되기 전에 프로세스가 종료된다면, 결국 `unlock`이 되지 않는 것이나 마찬가지입니다. 다음은 `gdb`를 이용해서 인위적으로 `scoped_lock`이 해제되기 전에 프로세스를 종료시킨 후에 다른 프로세스에서 `lock`을 시도하는 예제입니다.
 
 ```
 $ g++ bitest4.cpp -I/usr/local/boost-1.60.0/include -std=c++14 -pthread -o bitest4d -g
@@ -159,4 +160,3 @@ $
   </tr>
 </table>
 </div>
-
