@@ -1,6 +1,6 @@
 title:              Pensieve
-description:        'Embedded, TX1'
-tagline:            'Embedded, TX1'
+description:        'Linux, System Programming'
+tagline:            'Linux, System Programming'
 url:                https://nglee.github.io
 baseurl:            ''
 paginate:           5
