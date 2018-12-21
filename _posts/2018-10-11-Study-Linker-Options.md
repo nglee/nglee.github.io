@@ -1,11 +1,11 @@
 ---
 layout: post
-title: "링커 옵션 분석"
+title: "라이브러리 배포 과정에서 알아두면 좋을 링커 옵션"
 published: true
 comments: true
 ---
 
-이 포스트에서는 링커 `ld(1)` 가 제공하는 수많은 옵션들 중 라이브러리 배포 과정에서 참고하면 좋을 몇 가지 옵션들에 대해 분석해보겠습니다.
+이 포스트에서는 링커 `ld(1)` 가 제공하는 수많은 옵션들 중 라이브러리 배포 과정에서 요긴하게 활용할 수 있는 몇 가지 옵션들에 대해 알아보겠습니다.
 
 다음은 분석을 진행할 옵션들의 목록입니다.
 
@@ -20,6 +20,13 @@ comments: true
 --no-undefined
 --allow-shlib-undefined
 --no-allow-shlib-undefined
+```
+
+**라이브러리 이차 종속 문제, 다시 말해 링커 명령(linker command line)에 입력으로 주어진 shared object(.so) 가 의존하는 라이브러리의 위치를 명시할 때 사용하는 옵션들:**
+```
+--rpath-link
+--rpath
+--enable-new-dtags
 ```
 
 분석에 사용되는 링커 `ld(1)` 와 컴파일러 드라이버(compiler driver) `g++(1)` 의 버전은 다음과 같습니다.
@@ -65,9 +72,9 @@ $ g++ -o sample1 sample1.cpp -lpthread -v
    ...(중간 생략)...
 
 /usr/lib/gcc/x86_64-linux-gnu/5/collect2
-    
+
    ...(중간 생략)...
-   
+
    --as-needed
 
    ...(중간 생략)...
@@ -249,6 +256,116 @@ $ g++ -shared -o libf3.so f3.o -L. -Wl,--no-allow-shlib-undefined -lf2
 collect2: error: ld returned 1 exit status
 $
 ```
+----------------------------------------------------------
+
+## 세 번째
+
+**라이브러리 이차 종속 문제, 다시 말해 링커 명령(linker command line)에 입력으로 주어진 shared object(.so) 가 의존하는 라이브러리의 위치를 명시할 때 사용하는 옵션들:**
+```
+--rpath-link
+--rpath
+--enable-new-dtags
+```
+
+일차 종속 라이브러리들은 반드시 `-l` 옵션으로 명시되어야 합니다.
+
+이차 종속 라이브러리들의 경우, 일차 종속 라이브러리들이 `DT_RPATH` 나 `DT_RUNPATH` 를 통해 이차 종속 라이브러리들이 위치한 곳을 잘 명시해 놓았기를 바라는 것이 좋지만, 그렇지 않을 경우 `--rpath-link` 옵션이나 `--rpath` 옵션으로 이차 종속 라이브러리가 위치한 디렉토리를 명시하는 것이 좋습니다.
+
+`--rpath-link` 와 `--rpath` 의 차이는, `--rpath` 의 경우 링커가 출력하는 라이브러리 또는 실행파일의 `DT_RPATH` 에 `--rpath` 옵션으로 명시된 디렉토리가 추가된다는 것입니다. 또한, 이 때 `--enable-new-dtags` 옵션을 사용하면 `DT_RPATH` 가 아닌 `DT_RUNPATH` 를 사용하여 명시하게 됩니다.
+
+그런데 `ld(1)` 에 버그가 하나 있습니다. `DT_RPATH` 에 명시된 `$ORIGIN` 키워드를 해석하지 못하는 버그입니다.
+
+```
+$ ls -F
+f1/  f2/  main.cpp
+$ ls f1
+f1.cpp
+$ ls f2
+f2.cpp
+$ cat main.cpp
+extern void f1();
+
+int main()
+{
+        f1();
+}
+$ cat f1/f1.cpp
+extern void f2();
+
+void f1()
+{
+        f2();
+}
+$ cat f2/f2.cpp
+void f2() {}
+$ g++ -shared -o f2/libf2.so -fPIC f2/f2.cpp
+$ g++ -shared -o f1/libf1.so -fPIC f1/f1.cpp -Lf2 -lf2 -Wl,--rpath,'$ORIGIN/../f2'
+$ g++ -o main main.cpp -Lf1 -lf1 -Wl,--rpath,f1
+/usr/bin/ld: warning: libf2.so, needed by f1/libf1.so, not found (try using -rpath or -rpath-link)
+f1/libf1.so: undefined reference to `f2()'
+collect2: error: ld returned 1 exit status
+$ readelf -d f1/libf1.so | egrep "(NEEDED)|(RPATH)"
+ 0x0000000000000001 (NEEDED)             Shared library: [libf2.so]
+ 0x000000000000000f (RPATH)              Library rpath: [$ORIGIN/../f2]
+$ ld -v
+GNU ld (GNU Binutils for Ubuntu) 2.26.1
+$
+```
+
+이 버그는 알려진 버그로 이미 [여기](https://sourceware.org/bugzilla/show_bug.cgi?id=16936)와 [여기](https://sourceware.org/bugzilla/show_bug.cgi?id=20535)에 보고가 되어 있고 2.28 버전에서 픽스되었습니다.
+
+우분투 16.04 의 경우 `g++ 5.4.0`, `ld 2.26.1` 이 기본 버전입니다.  
+우분투 17.04 의 경우 `g++ 6.3.0`, `ld 2.28` 이 기본 버전입니다.  
+우분투 18.04 의 경우 `g++ 7.3.0`, `ld 2.30` 이 기본 버전입니다.  
+테스트 환경이 우분투 16.04 여서 버그가 존재하는 링커 버전이 이용되었던 것입니다.
+
+버그가 픽스된 2.28 버전을 다운 받아서 위의 경우에 적용해보도록 하겠습니다. 먼저 2.28 버전을 다운 받아 컴파일한 후 `g++(1)` 이 새 버전의 `ld(1)` 를 이용하도록 설정하는 방법을 소개하겠습니다.
+
+```
+$ wget http://ftp.gnu.org/gnu/binutils/binutils-2.28.tar.gz
+$ tar xzf binutils-2.28.tar.gz
+$ cd binutils-2.28
+$ ./configure
+$ make -j12
+$ ./ld/ld-new -v
+GNU ld (GNU Binutils) 2.28
+$ which ld
+/usr/bin/ld
+$ ls -F /usr/bin/ld
+/usr/bin/ld@                                # 링크 파일임을 알 수 있습니다
+$ sudo ln -sf ${PWD}/ld/ld-new /usr/bin/ld  # 새 버전의 링커를 가리키도록 합니다
+$ ld -v
+GNU ld (GNU Binutils) 2.28
+$ cd ../
+$
+```
+
+이제 다음과 같이 오류가 해결되었음을 알 수 있습니다.
+
+```
+$ g++ -o main main.cpp -Lf1 -lf1 -Wl,--rpath,f1
+$ ./main
+$
+```
+
+참고로 [`ld(1)` 에 대한 `man page` 의 설명](http://man7.org/linux/man-pages/man1/ld.1.html)에 따르면 `ld(1)` 는 다음의 순서로 이차 종속 라이브러리를 탐색합니다.
+
+1. `--rpath-link` 로 명시된 디렉토리
+2. `--rpath` 로 명시된 디렉토리
+3. ELF 시스템에서, `--rpath-link` 와 `--rpath` 옵션이 사옹되지 않았다면, `LD_RUN_PATH` 환경변수에 명시된 디렉토리
+4. SunOS 에서, `--rpath` 옵션이 사용되지 않았다면, `-L` 옵션에 명시된 디렉토리
+5. `LD_LIBRARY_PATH` 환경변수에 명시된 디렉토리
+6. 일차 종속 라이브러리의 `DT_RPATH` 나 `DT_RUNPATH` 에 명시된 디렉토리
+7. `/lib`, `/usr/lib`
+8. `/etc/ld.so.conf`, 혹은 `/etc/ld.so.cache`
+
+또한 [`ld.so(8)` 에 대한 `man page` 의 설명](http://man7.org/linux/man-pages/man8/ld.so.8.html)에 따르면 `ld.so(8)` 는 다음의 순서로 라이브러리를 탐색합니다.
+
+1. `DT_RPATH` 에 명시된 디렉토리. 단, `DT_RUNPATH` 가 없어야 한다.
+2. `LD_LIBRARY_PATH` 환경 변수에 명시된 디렉토리. 단, secure-execution 모드에서는 무시된다.
+3. `DT_RUNPATH` 에 명시된 디렉토리. `DT_RUNPATH` 는 직접적으로 종속된 라이브러리를 찾는 데만 이용되고 그 라이브러리의 이차 종속 라이브러리를 찾는 데는 이용되지 않는다. 이와는 다르게 `DT_RPATH` 의 경우 n차 종속 라이브러리를 찾는 데 모두 이용될 수 있다.
+4. `/etc/ld.so.cache`. 단, `-z nodeflib` 옵션이 포함되어 만들어진 실행파일이라면 `/lib` 와 `/usr/lib` 에 있는 라이브러리들은 무시된다.
+5. `/lib`, `/usr/lib`. 단, `-z nodeflib` 옵션이 포함되어 만들어진 실행파일이라면 무시된다.
 
 ----------
 <a href="javascript:showChangeLog();">Show ChangeLog</a>
@@ -273,6 +390,11 @@ $
     <td class="td_center">1.2</td>
     <td>Mentioned LD_PRELOAD</td>
     <td class="td_center">2018-10-22</td>
+  </tr>
+  <tr>
+    <td class="td_center">1.3</td>
+    <td>Added --rpath-link, --rpath, --enable-new-dtags</td>
+    <td class="td_center">2018-12-21</td>
   </tr>
 </table>
 </div>
