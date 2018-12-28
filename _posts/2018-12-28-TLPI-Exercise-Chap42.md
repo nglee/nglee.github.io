@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "The Linux Programming Interface(TLPI) 42장 연습문제 풀이"
+title: "The Linux Programming Interface 42장 연습문제 풀이"
 published: true
 comments: true
 ---
@@ -9,9 +9,99 @@ comments: true
 
 In the following example, `main` opens `libfoo.so` and `libbar.so` with `dlopen()`, and `libbar.so` itself opens `libfoo.so` with `dlopen()`. The example tries to verify that `libfoo.so` is not unloaded even if `main` closes `libfoo.so` with `dlclose()` if the symbol `foo` of `libfoo.so` is used by `libbar.so`.
 
-<script src="http://gist-it.appspot.com/https://github.com/nglee/TLPI/blob/master/42-1/foo.c"></script>
-<script src="http://gist-it.appspot.com/https://github.com/nglee/TLPI/blob/master/42-1/bar.c"></script>
-<script src="http://gist-it.appspot.com/https://github.com/nglee/TLPI/blob/master/42-1/main.c"></script>
+```
+$ cat foo.c
+#include <stdio.h>
+
+void foo()
+{
+        printf("foo\n");
+}
+$ cat bar.c
+#include <dlfcn.h>
+#include "tlpi_hdr.h"
+
+extern void foo();
+
+void *bar(void *arg)
+{
+        void *fooHandle;
+        void (*foo)(void);
+        const char *err;
+
+        fooHandle = dlopen("libfoo.so", RTLD_LAZY);
+        if (fooHandle == NULL)
+                fatal("dlopen: %s", dlerror());
+
+        (void) dlerror();
+        *(void **) (&foo) = dlsym(fooHandle, "foo");
+        err = dlerror();
+        if (err != NULL)
+                fatal("dlsym: %s", err);
+
+        for (int i = 0; i >= 0; i++)
+                if (0 == i % 100000000)
+                        (*foo)();
+
+        return NULL;
+}
+$ cat main.c
+#include <dlfcn.h>
+#include <pthread.h>
+#include "tlpi_hdr.h"
+
+int main()
+{
+        void *fooHandle, *barHandle;
+        void (*foo)(void);
+        void *(*bar)(void *);
+        const char *err;
+
+        fooHandle = dlopen("libfoo.so", RTLD_LAZY);
+        if (fooHandle == NULL)
+                fatal("dlopen: %s", dlerror());
+
+        barHandle = dlopen("libbar.so", RTLD_LAZY);
+        if (fooHandle == NULL)
+                fatal("dlopen: %s", dlerror());
+
+        (void) dlerror();
+        *(void **) (&foo) = dlsym(fooHandle, "foo");
+        err = dlerror();
+        if (err != NULL)
+                fatal("dlsym: %s", err);
+
+        (void) dlerror();
+        *(void **) (&bar) = dlsym(barHandle, "bar");
+        err = dlerror();
+        if (err != NULL)
+                fatal("dlsym: %s", err);
+
+        printf("Calling foo of libfoo.so from main\n");
+        (*foo)();
+
+        pthread_t t;
+        void *res;
+        int s;
+
+        printf("Creating a thread that calls bar of libbar.so from main\n");
+        s = pthread_create(&t, NULL, *bar, NULL);
+        if (s != 0)
+                errExitEN(s, "pthread_create");
+
+        sleep(2);
+
+        printf("Closing libfoo.so with dlclose()\n");
+        dlclose(fooHandle);
+
+        s = pthread_join(t, &res);
+        if (s != 0)
+                errExitEN(s, "pthread_join");
+
+        exit(EXIT_SUCCESS);
+}
+$
+```
 
 Possible output is:
 ```
@@ -47,7 +137,54 @@ $
 
 > 42-2. Add a `dladdr()` call to the program in Listing 42-1 (dynload.c) in order to retrieve information about the address returned by `dlsym()`. Print out the values of the fields of the returned Dl_info structure, and verify that they are as expected.
 
-<script src="http://gist-it.appspot.com/https://github.com/nglee/TLPI/blob/master/42-2/dynload.c></script>
+```
+$ cat dynload.c
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include "tlpi_hdr.h"
+
+int
+main(int argc, char *argv[])
+{
+    void *libHandle;            /* Handle for shared library */
+    void (*funcp)(void);        /* Pointer to function with no arguments */
+    const char *err;
+
+    if (argc != 3 || strcmp(argv[1], "--help") == 0)
+        usageErr("%s lib-path func-name\n", argv[0]);
+
+    /* Load the shared library and get a handle for later use */
+
+    libHandle = dlopen(argv[1], RTLD_LAZY);
+    if (libHandle == NULL)
+        fatal("dlopen: %s", dlerror());
+
+    /* Search library for symbol named in argv[2] */
+
+    (void) dlerror();                           /* Clear dlerror() */
+    *(void **) (&funcp) = dlsym(libHandle, argv[2]);
+    err = dlerror();
+    if (err != NULL)
+        fatal("dlsym: %s", err);
+
+    /* Try calling the address returned by dlsym() as a function
+       that takes no arguments */
+
+    (*funcp)();
+
+    Dl_info info;
+    dladdr(funcp, &info);
+    printf("dli_fname: %s\n", info.dli_fname);
+    printf("dli_fbase: %p\n", info.dli_fbase);
+    printf("dli_sname: %s\n", info.dli_sname);
+    printf("dli_saddr: %p\n", info.dli_saddr);
+
+    dlclose(libHandle);                         /* Close the library */
+
+    exit(EXIT_SUCCESS);
+}
+$
+```
 
 Possible output is:
 ```
