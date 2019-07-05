@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "컴퓨터 프로그래밍의 예술 연습문제 2.2.6.6"
-published: true
+published: false
 comments: true
 ---
 
