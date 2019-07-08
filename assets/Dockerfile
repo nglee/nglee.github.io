@@ -3,13 +3,13 @@ LABEL maintainer "Namgoo Lee <devnglee@gmail.com>"
 
 RUN apt update && apt install -y git g++ gfortran cmake curl wget unzip autoconf automake libtool libbz2-dev zlib1g-dev libzip-dev python-dev
 
-ENV OPENBLAS_VERSION 0.3.5
+ENV OPENBLAS_VERSION 0.3.6
 ENV OPENBLAS_INSTALL_DIR /usr/local/openblas-$OPENBLAS_VERSION
 
 RUN git clone -q --depth 1 -b v$OPENBLAS_VERSION https://github.com/xianyi/OpenBLAS.git && \
 cd OpenBLAS && \
-make -j$(nproc) && \
-make install PREFIX=$OPENBLAS_INSTALL_DIR && \
+make TARGET=ARMV8 -j$(nproc) && \
+make install TARGET=ARMV8 PREFIX=$OPENBLAS_INSTALL_DIR && \
 cd ../ && \
 rm -rf OpenBLAS
 
@@ -45,7 +45,7 @@ make install -j$(nproc) && \
 cd ../../../ && \
 rm -rf opencv-$OPENCV_VERSION
 
-ENV BOOST_VERSION 1.68.0
+ENV BOOST_VERSION 1.70.0
 ENV BOOST_INSTALL_DIR /usr/local/boost-$BOOST_VERSION
 
 RUN git clone -q --depth 1 -b boost-$BOOST_VERSION --recursive -j $(nproc) https://github.com/boostorg/boost.git && \
@@ -66,12 +66,6 @@ cd ../ && \
 rm -rf openmpi-$OPENMPI_VERSION && \
 export PATH=$OPENMPI_INSTALL_DIR/bin:\$PATH && \
 export LD_LIBRARY_PATH=$OPENMPI_INSTALL_DIR/lib:\$LD_LIBRARY_PATH
-
-RUN ln -sf /usr/local/cuda/include/nvml.h /usr/local/include && \
-ln -sf /usr/local/cuda/lib64/stubs/libnvidia-ml.so /usr/local/lib/libnvidia-ml.so.1 && \
-mkdir /usr/local/cudnn/cuda/include -p && \
-ln -s /usr/lib/aarch64-linux-gnu /usr/local/cudnn/lib && \
-ln -s /usr/include/aarch64-linux-gnu/cudnn_v7.h /usr/local/cudnn/cuda/include/cudnn.h
 
 RUN git clone -q -b v2.7 --recursive -j $(nproc) https://github.com/Microsoft/CNTK.git && \
 cd CNTK && \
