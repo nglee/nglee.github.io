@@ -64,7 +64,7 @@ https://mxnet.apache.org/versions/master/install/c_plus_plus.html
 ```
 
 
-## Convert CNTK Model to ONNX Model
+## Convert CNTK Model to ONNX Model
 Going to build `CNTK 2.7` CPU only version. `CNTK 2.7` supports `ONNX 1.4.1`.
 
 ##### Download Anaconda
@@ -153,7 +153,7 @@ python setup.py install
 ##### Install tensorflow-onnx
 
 ```
-cd 
+cd
 git clone https://github.com/onnx/tensorflow-onnx
 cd tensorflow-onnx
 git checkout v1.4.1
