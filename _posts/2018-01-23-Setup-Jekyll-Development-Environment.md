@@ -26,8 +26,19 @@ $ echo "gem 'github-pages', group: :jekyll_plugins" >> Gemfile
 $ sudo apt install zlib1g-dev           # Requirement for nokogiri gem
 $ bundle update                         # Without sudo, and enter password only if prompted
 
+# TROUBLE-SHOOTING!!!
+# Can't find gem bundler (>= 0.a) with executable bundle (Gem::GemNotFoundException)
+$ gem update --system
+
 # Start Jekyll
 $ bundle exec jekyll serve              # Server starts on 127.0.0.1:4000
+```
+
+
+```shell
+# Tell Jekyll which hostname to respond
+# https://zarino.co.uk/post/jekyll-local-network/
+$ jekyll serve --host 0.0.0.0
 ```
 
 ----------
