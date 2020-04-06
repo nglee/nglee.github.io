@@ -1,3 +1,18 @@
 [submodule "TAOCP"]
 	path = _posts/TAOCP
 	url = https://github.com/nglee/TAOCP.git
+[submodule "_posts/boost/bitest1"]
+	path = _posts/boost/bitest1
+	url = https://gist.github.com/5892c346d26f9282160581e7fde4d3cf.git
+[submodule "_posts/boost/bitest2"]
+	path = _posts/boost/bitest2
+	url = https://gist.github.com/a03ed8c2de387608f6d9d98ce53beb51.git
+[submodule "_posts/boost/bitest3"]
+	path = _posts/boost/bitest3
+	url = https://gist.github.com/b9dd4d8f55010d47a48f30f4967b86d1.git
+[submodule "_posts/boost/bitest4"]
+	path = _posts/boost/bitest4
+	url = https://gist.github.com/a6eb842a92f1b44ca3d3880b255aac80.git
+[submodule "_posts/boost/bitest5"]
+	path = _posts/boost/bitest5
+	url = https://gist.github.com/164bde324c6c03a50047648c222d0b28.git
