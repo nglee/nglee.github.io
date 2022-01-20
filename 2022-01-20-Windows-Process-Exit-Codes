@@ -1,0 +1,45 @@
+---
+layout: post
+title: "Windows Processor Exit Codes"
+published: true
+comments: true
+---
+
+다음과 같은 결과를 보았다면
+
+```
+Process exited with code -1073741515
+```
+
+에러 코드를 2's complement 로 바꿔서 16진수로 변환 후
+
+```
+-1073741515 (decimal) -> C0000135
+```
+
+[`NTSTATUS Values`](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55) 에서 검색한다
+
+```
+0xC0000135
+
+STATUS_DLL_NOT_FOUND
+```
+
+참고자료: https://docs.microsoft.com/en-us/answers/questions/379441/error-code-34exited-with-code-107374181934.html
+
+----------
+<a href="javascript:showChangeLog();">Show ChangeLog</a>
+<div id="post_changelog" style="display:none;">
+<table>
+  <tr>
+    <th>Version</th>
+    <th>Description</th>
+    <th>Date</th>
+  </tr>
+  <tr>
+    <td class="td_center">1.0</td>
+    <td>Publish</td>
+    <td class="td_center">2022-01-20</td>
+  </tr>
+</table>
+</div>
